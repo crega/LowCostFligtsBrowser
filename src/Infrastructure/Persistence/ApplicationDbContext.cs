@@ -34,6 +34,7 @@ namespace LowCostFligtsBrowser.Infrastructure.Persistence
         public DbSet<TodoItem> TodoItems { get; set; }
 
         public DbSet<TodoList> TodoLists { get; set; }
+        public DbSet<Airport> Airports { get; set; }
 
         public override async Task<int> SaveChangesAsync(CancellationToken cancellationToken = new CancellationToken())
         {

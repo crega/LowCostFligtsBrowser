@@ -102,6 +102,8 @@ namespace LowCostFligtsBrowser.WebUI
             {
                 settings.Path = "/api";
                 settings.DocumentPath = "/api/specification.json";
+                settings.DocumentTitle = "Low cost flights API";
+                settings.EnableTryItOut = true;
             });
 
             app.UseRouting();

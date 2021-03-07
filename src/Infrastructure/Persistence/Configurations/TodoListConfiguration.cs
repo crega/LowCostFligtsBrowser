@@ -1,4 +1,5 @@
-﻿using LowCostFligtsBrowser.Domain.Entities;
+﻿using LowCostFligtsBrowser.Domain.Common;
+using LowCostFligtsBrowser.Domain.Entities;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
 
@@ -14,6 +15,9 @@ namespace LowCostFligtsBrowser.Infrastructure.Persistence.Configurations
 
             builder
                 .OwnsOne(b => b.Colour);
+            builder.Property(t => t.Status)
+                     .HasDefaultValue<SoftDeleteStatus>(SoftDeleteStatus.Active)
+                     .HasConversion<int>();
         }
     }
 }

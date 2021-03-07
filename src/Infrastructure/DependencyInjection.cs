@@ -18,13 +18,13 @@ namespace LowCostFligtsBrowser.Infrastructure
             if (configuration.GetValue<bool>("UseInMemoryDatabase"))
             {
                 services.AddDbContext<ApplicationDbContext>(options =>
-                    options.UseInMemoryDatabase("LowCostFligtsBrowserDb"));
+                    options.UseInMemoryDatabase("LowCostFlightDb"));
             }
             else
             {
                 services.AddDbContext<ApplicationDbContext>(options =>
                     options.UseSqlServer(
-                        configuration.GetConnectionString("DefaultConnection"),
+                        configuration.GetConnectionString("LowCostFlightDb"),
                         b => b.MigrationsAssembly(typeof(ApplicationDbContext).Assembly.FullName)));
             }
 
@@ -51,6 +51,8 @@ namespace LowCostFligtsBrowser.Infrastructure
             {
                 options.AddPolicy("CanPurge", policy => policy.RequireRole("Administrator"));
             });
+
+            services.AddMemoryCache();
 
             return services;
         }

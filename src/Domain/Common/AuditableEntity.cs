@@ -1,4 +1,5 @@
-﻿using System;
+﻿using LowCostFligtsBrowser.Domain.Common;
+using System;
 
 namespace LowCostFligtsBrowser.Domain.Common
 {
@@ -11,5 +12,7 @@ namespace LowCostFligtsBrowser.Domain.Common
         public DateTime? LastModified { get; set; }
 
         public string LastModifiedBy { get; set; }
+        public SoftDeleteStatus Status { get; set; } = SoftDeleteStatus.Active;
+
     }
 }
