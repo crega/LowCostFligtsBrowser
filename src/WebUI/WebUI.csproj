@@ -16,6 +16,7 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <PackageReference Include="Afonsoft.Amadeus" Version="2.1.2" />
     <PackageReference Include="FluentValidation.AspNetCore" Version="9.3.0" />
     <PackageReference Include="Microsoft.AspNetCore.SpaServices.Extensions" Version="5.0.0" />
     <PackageReference Include="Microsoft.AspNetCore.Identity.UI" Version="5.0.0" />

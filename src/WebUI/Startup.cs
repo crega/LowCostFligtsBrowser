@@ -47,6 +47,7 @@ namespace LowCostFligtsBrowser.WebUI
                     .AddFluentValidation();
 
             services.AddRazorPages();
+            services.AddMemoryCache();
 
             // Customise default API behaviour
             services.Configure<ApiBehaviorOptions>(options =>

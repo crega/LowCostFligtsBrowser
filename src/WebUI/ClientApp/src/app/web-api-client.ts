@@ -16,6 +16,8 @@ export const API_BASE_URL = new InjectionToken<string>('API_BASE_URL');
 
 export interface IAirportClient {
     get(): Observable<AirportVM>;
+    getAllFlights(): Observable<FileResponse>;
+    searchFlights(searchQuery: SearchFlightsQuery): Observable<SearchFlightsVM>;
 }
 
 @Injectable({
@@ -77,6 +79,104 @@ export class AirportClient implements IAirportClient {
             }));
         }
         return _observableOf<AirportVM>(<any>null);
+    }
+
+    getAllFlights(): Observable<FileResponse> {
+        let url_ = this.baseUrl + "/api/Airport/GetAllFlights";
+        url_ = url_.replace(/[?&]$/, "");
+
+        let options_ : any = {
+            observe: "response",
+            responseType: "blob",
+            headers: new HttpHeaders({
+                "Accept": "application/octet-stream"
+            })
+        };
+
+        return this.http.request("get", url_, options_).pipe(_observableMergeMap((response_ : any) => {
+            return this.processGetAllFlights(response_);
+        })).pipe(_observableCatch((response_: any) => {
+            if (response_ instanceof HttpResponseBase) {
+                try {
+                    return this.processGetAllFlights(<any>response_);
+                } catch (e) {
+                    return <Observable<FileResponse>><any>_observableThrow(e);
+                }
+            } else
+                return <Observable<FileResponse>><any>_observableThrow(response_);
+        }));
+    }
+
+    protected processGetAllFlights(response: HttpResponseBase): Observable<FileResponse> {
+        const status = response.status;
+        const responseBlob =
+            response instanceof HttpResponse ? response.body :
+            (<any>response).error instanceof Blob ? (<any>response).error : undefined;
+
+        let _headers: any = {}; if (response.headers) { for (let key of response.headers.keys()) { _headers[key] = response.headers.get(key); }}
+        if (status === 200 || status === 206) {
+            const contentDisposition = response.headers ? response.headers.get("content-disposition") : undefined;
+            const fileNameMatch = contentDisposition ? /filename="?([^"]*?)"?(;|$)/g.exec(contentDisposition) : undefined;
+            const fileName = fileNameMatch && fileNameMatch.length > 1 ? fileNameMatch[1] : undefined;
+            return _observableOf({ fileName: fileName, data: <any>responseBlob, status: status, headers: _headers });
+        } else if (status !== 200 && status !== 204) {
+            return blobToText(responseBlob).pipe(_observableMergeMap(_responseText => {
+            return throwException("An unexpected server error occurred.", status, _responseText, _headers);
+            }));
+        }
+        return _observableOf<FileResponse>(<any>null);
+    }
+
+    searchFlights(searchQuery: SearchFlightsQuery): Observable<SearchFlightsVM> {
+        let url_ = this.baseUrl + "/api/Airport/SearchFlights";
+        url_ = url_.replace(/[?&]$/, "");
+
+        const content_ = JSON.stringify(searchQuery);
+
+        let options_ : any = {
+            body: content_,
+            observe: "response",
+            responseType: "blob",
+            headers: new HttpHeaders({
+                "Content-Type": "application/json",
+                "Accept": "application/json"
+            })
+        };
+
+        return this.http.request("post", url_, options_).pipe(_observableMergeMap((response_ : any) => {
+            return this.processSearchFlights(response_);
+        })).pipe(_observableCatch((response_: any) => {
+            if (response_ instanceof HttpResponseBase) {
+                try {
+                    return this.processSearchFlights(<any>response_);
+                } catch (e) {
+                    return <Observable<SearchFlightsVM>><any>_observableThrow(e);
+                }
+            } else
+                return <Observable<SearchFlightsVM>><any>_observableThrow(response_);
+        }));
+    }
+
+    protected processSearchFlights(response: HttpResponseBase): Observable<SearchFlightsVM> {
+        const status = response.status;
+        const responseBlob =
+            response instanceof HttpResponse ? response.body :
+            (<any>response).error instanceof Blob ? (<any>response).error : undefined;
+
+        let _headers: any = {}; if (response.headers) { for (let key of response.headers.keys()) { _headers[key] = response.headers.get(key); }}
+        if (status === 200) {
+            return blobToText(responseBlob).pipe(_observableMergeMap(_responseText => {
+            let result200: any = null;
+            let resultData200 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver);
+            result200 = SearchFlightsVM.fromJS(resultData200);
+            return _observableOf(result200);
+            }));
+        } else if (status !== 200 && status !== 204) {
+            return blobToText(responseBlob).pipe(_observableMergeMap(_responseText => {
+            return throwException("An unexpected server error occurred.", status, _responseText, _headers);
+            }));
+        }
+        return _observableOf<SearchFlightsVM>(<any>null);
     }
 }
 
@@ -799,6 +899,218 @@ export interface IAirportDTO {
     id?: number;
     airportName?: string | undefined;
     iataCode?: string | undefined;
+}
+
+export class SearchFlightsVM implements ISearchFlightsVM {
+    searchedResult?: SearchFlightsDTO[] | undefined;
+
+    constructor(data?: ISearchFlightsVM) {
+        if (data) {
+            for (var property in data) {
+                if (data.hasOwnProperty(property))
+                    (<any>this)[property] = (<any>data)[property];
+            }
+        }
+    }
+
+    init(_data?: any) {
+        if (_data) {
+            if (Array.isArray(_data["searchedResult"])) {
+                this.searchedResult = [] as any;
+                for (let item of _data["searchedResult"])
+                    this.searchedResult!.push(SearchFlightsDTO.fromJS(item));
+            }
+        }
+    }
+
+    static fromJS(data: any): SearchFlightsVM {
+        data = typeof data === 'object' ? data : {};
+        let result = new SearchFlightsVM();
+        result.init(data);
+        return result;
+    }
+
+    toJSON(data?: any) {
+        data = typeof data === 'object' ? data : {};
+        if (Array.isArray(this.searchedResult)) {
+            data["searchedResult"] = [];
+            for (let item of this.searchedResult)
+                data["searchedResult"].push(item.toJSON());
+        }
+        return data; 
+    }
+}
+
+export interface ISearchFlightsVM {
+    searchedResult?: SearchFlightsDTO[] | undefined;
+}
+
+export class SearchFlightsDTO implements ISearchFlightsDTO {
+    id?: number;
+    departureAirport?: string | undefined;
+    arrivalAirport?: string | undefined;
+    dateOfDeparture?: Date;
+    dateOfArrival?: Date;
+    numberOfItinerariesArrival?: number;
+    numberOfItinerariesDeparture?: number;
+    numberOfAdults?: number;
+    numberOfChildren?: number;
+    numberOfInfants?: number;
+    currency?: string | undefined;
+    price?: string | undefined;
+
+    constructor(data?: ISearchFlightsDTO) {
+        if (data) {
+            for (var property in data) {
+                if (data.hasOwnProperty(property))
+                    (<any>this)[property] = (<any>data)[property];
+            }
+        }
+    }
+
+    init(_data?: any) {
+        if (_data) {
+            this.id = _data["id"];
+            this.departureAirport = _data["departureAirport"];
+            this.arrivalAirport = _data["arrivalAirport"];
+            this.dateOfDeparture = _data["dateOfDeparture"] ? new Date(_data["dateOfDeparture"].toString()) : <any>undefined;
+            this.dateOfArrival = _data["dateOfArrival"] ? new Date(_data["dateOfArrival"].toString()) : <any>undefined;
+            this.numberOfItinerariesArrival = _data["numberOfItinerariesArrival"];
+            this.numberOfItinerariesDeparture = _data["numberOfItinerariesDeparture"];
+            this.numberOfAdults = _data["numberOfAdults"];
+            this.numberOfChildren = _data["numberOfChildren"];
+            this.numberOfInfants = _data["numberOfInfants"];
+            this.currency = _data["currency"];
+            this.price = _data["price"];
+        }
+    }
+
+    static fromJS(data: any): SearchFlightsDTO {
+        data = typeof data === 'object' ? data : {};
+        let result = new SearchFlightsDTO();
+        result.init(data);
+        return result;
+    }
+
+    toJSON(data?: any) {
+        data = typeof data === 'object' ? data : {};
+        data["id"] = this.id;
+        data["departureAirport"] = this.departureAirport;
+        data["arrivalAirport"] = this.arrivalAirport;
+        data["dateOfDeparture"] = this.dateOfDeparture ? this.dateOfDeparture.toISOString() : <any>undefined;
+        data["dateOfArrival"] = this.dateOfArrival ? this.dateOfArrival.toISOString() : <any>undefined;
+        data["numberOfItinerariesArrival"] = this.numberOfItinerariesArrival;
+        data["numberOfItinerariesDeparture"] = this.numberOfItinerariesDeparture;
+        data["numberOfAdults"] = this.numberOfAdults;
+        data["numberOfChildren"] = this.numberOfChildren;
+        data["numberOfInfants"] = this.numberOfInfants;
+        data["currency"] = this.currency;
+        data["price"] = this.price;
+        return data; 
+    }
+}
+
+export interface ISearchFlightsDTO {
+    id?: number;
+    departureAirport?: string | undefined;
+    arrivalAirport?: string | undefined;
+    dateOfDeparture?: Date;
+    dateOfArrival?: Date;
+    numberOfItinerariesArrival?: number;
+    numberOfItinerariesDeparture?: number;
+    numberOfAdults?: number;
+    numberOfChildren?: number;
+    numberOfInfants?: number;
+    currency?: string | undefined;
+    price?: string | undefined;
+}
+
+export class SearchFlightsQuery implements ISearchFlightsQuery {
+    originIATACode?: string | undefined;
+    destinationIATACode?: string | undefined;
+    departureTime?: Date;
+    numberOfAdults?: number;
+    returnDate?: Date | undefined;
+    numberOfChildren?: number | undefined;
+    numberOfInfants?: number | undefined;
+    travelClass?: number | undefined;
+    includedAirlineCodes?: string | undefined;
+    excludedAirlineCodes?: string | undefined;
+    noStops?: boolean | undefined;
+    currencyCode?: string | undefined;
+    maxPrice?: number | undefined;
+    max?: number | undefined;
+
+    constructor(data?: ISearchFlightsQuery) {
+        if (data) {
+            for (var property in data) {
+                if (data.hasOwnProperty(property))
+                    (<any>this)[property] = (<any>data)[property];
+            }
+        }
+    }
+
+    init(_data?: any) {
+        if (_data) {
+            this.originIATACode = _data["originIATACode"];
+            this.destinationIATACode = _data["destinationIATACode"];
+            this.departureTime = _data["departureTime"] ? new Date(_data["departureTime"].toString()) : <any>undefined;
+            this.numberOfAdults = _data["numberOfAdults"];
+            this.returnDate = _data["returnDate"] ? new Date(_data["returnDate"].toString()) : <any>undefined;
+            this.numberOfChildren = _data["numberOfChildren"];
+            this.numberOfInfants = _data["numberOfInfants"];
+            this.travelClass = _data["travelClass"];
+            this.includedAirlineCodes = _data["includedAirlineCodes"];
+            this.excludedAirlineCodes = _data["excludedAirlineCodes"];
+            this.noStops = _data["noStops"];
+            this.currencyCode = _data["currencyCode"];
+            this.maxPrice = _data["maxPrice"];
+            this.max = _data["max"];
+        }
+    }
+
+    static fromJS(data: any): SearchFlightsQuery {
+        data = typeof data === 'object' ? data : {};
+        let result = new SearchFlightsQuery();
+        result.init(data);
+        return result;
+    }
+
+    toJSON(data?: any) {
+        data = typeof data === 'object' ? data : {};
+        data["originIATACode"] = this.originIATACode;
+        data["destinationIATACode"] = this.destinationIATACode;
+        data["departureTime"] = this.departureTime ? this.departureTime.toISOString() : <any>undefined;
+        data["numberOfAdults"] = this.numberOfAdults;
+        data["returnDate"] = this.returnDate ? this.returnDate.toISOString() : <any>undefined;
+        data["numberOfChildren"] = this.numberOfChildren;
+        data["numberOfInfants"] = this.numberOfInfants;
+        data["travelClass"] = this.travelClass;
+        data["includedAirlineCodes"] = this.includedAirlineCodes;
+        data["excludedAirlineCodes"] = this.excludedAirlineCodes;
+        data["noStops"] = this.noStops;
+        data["currencyCode"] = this.currencyCode;
+        data["maxPrice"] = this.maxPrice;
+        data["max"] = this.max;
+        return data; 
+    }
+}
+
+export interface ISearchFlightsQuery {
+    originIATACode?: string | undefined;
+    destinationIATACode?: string | undefined;
+    departureTime?: Date;
+    numberOfAdults?: number;
+    returnDate?: Date | undefined;
+    numberOfChildren?: number | undefined;
+    numberOfInfants?: number | undefined;
+    travelClass?: number | undefined;
+    includedAirlineCodes?: string | undefined;
+    excludedAirlineCodes?: string | undefined;
+    noStops?: boolean | undefined;
+    currencyCode?: string | undefined;
+    maxPrice?: number | undefined;
+    max?: number | undefined;
 }
 
 export class PaginatedListOfTodoItemDto implements IPaginatedListOfTodoItemDto {

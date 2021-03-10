@@ -1,4 +1,5 @@
 ﻿using LowCostFligtsBrowser.Application.Common.Interfaces;
+using LowCostFligtsBrowser.Infrastructure.Services;
 using LowCostFligtsBrowser.Infrastructure.Files;
 using LowCostFligtsBrowser.Infrastructure.Identity;
 using LowCostFligtsBrowser.Infrastructure.Persistence;
@@ -31,6 +32,8 @@ namespace LowCostFligtsBrowser.Infrastructure
             services.AddScoped<IApplicationDbContext>(provider => provider.GetService<ApplicationDbContext>());
 
             services.AddScoped<IDomainEventService, DomainEventService>();
+
+            services.AddScoped<IAmadeusClient, AmadeusAPIServiceClient>();
 
             services
                 .AddDefaultIdentity<ApplicationUser>()

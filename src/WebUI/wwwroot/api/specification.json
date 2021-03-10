@@ -26,6 +26,59 @@
         }
       }
     },
+    "/api/Airport/GetAllFlights": {
+      "get": {
+        "tags": [
+          "Airport"
+        ],
+        "operationId": "Airport_GetAllFlights",
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/octet-stream": {
+                "schema": {
+                  "type": "string",
+                  "format": "binary"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/Airport/SearchFlights": {
+      "post": {
+        "tags": [
+          "Airport"
+        ],
+        "operationId": "Airport_SearchFlights",
+        "requestBody": {
+          "x-name": "searchQuery",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SearchFlightsQuery"
+              }
+            }
+          },
+          "required": true,
+          "x-position": 1
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SearchFlightsVM"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/TodoItems": {
       "get": {
         "tags": [
@@ -487,6 +540,141 @@
           },
           "iataCode": {
             "type": "string",
+            "nullable": true
+          }
+        }
+      },
+      "SearchFlightsVM": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "searchedResult": {
+            "type": "array",
+            "nullable": true,
+            "items": {
+              "$ref": "#/components/schemas/SearchFlightsDTO"
+            }
+          }
+        }
+      },
+      "SearchFlightsDTO": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "id": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "departureAirport": {
+            "type": "string",
+            "nullable": true
+          },
+          "arrivalAirport": {
+            "type": "string",
+            "nullable": true
+          },
+          "dateOfDeparture": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "dateOfArrival": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "numberOfItinerariesArrival": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "numberOfItinerariesDeparture": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "numberOfAdults": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "numberOfChildren": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "numberOfInfants": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "currency": {
+            "type": "string",
+            "nullable": true
+          },
+          "price": {
+            "type": "string",
+            "nullable": true
+          }
+        }
+      },
+      "SearchFlightsQuery": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "originIATACode": {
+            "type": "string",
+            "nullable": true
+          },
+          "destinationIATACode": {
+            "type": "string",
+            "nullable": true
+          },
+          "departureTime": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "numberOfAdults": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "returnDate": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true
+          },
+          "numberOfChildren": {
+            "type": "integer",
+            "format": "int32",
+            "nullable": true
+          },
+          "numberOfInfants": {
+            "type": "integer",
+            "format": "int32",
+            "nullable": true
+          },
+          "travelClass": {
+            "type": "integer",
+            "format": "int32",
+            "nullable": true
+          },
+          "includedAirlineCodes": {
+            "type": "string",
+            "nullable": true
+          },
+          "excludedAirlineCodes": {
+            "type": "string",
+            "nullable": true
+          },
+          "noStops": {
+            "type": "boolean",
+            "nullable": true
+          },
+          "currencyCode": {
+            "type": "string",
+            "nullable": true
+          },
+          "maxPrice": {
+            "type": "integer",
+            "format": "int32",
+            "nullable": true
+          },
+          "max": {
+            "type": "integer",
+            "format": "int32",
             "nullable": true
           }
         }
