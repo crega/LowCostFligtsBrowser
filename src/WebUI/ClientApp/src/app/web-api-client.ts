@@ -17,7 +17,7 @@ export const API_BASE_URL = new InjectionToken<string>('API_BASE_URL');
 export interface IAirportClient {
     get(): Observable<AirportVM>;
     getAllFlights(): Observable<FileResponse>;
-    searchFlights(searchQuery: SearchFlightsQuery): Observable<SearchFlightsVM>;
+    searchFlights(searchQuery: SearchFlightsQuery): Observable<PaginatedListOfSearchFlightsDTO>;
 }
 
 @Injectable({
@@ -127,7 +127,7 @@ export class AirportClient implements IAirportClient {
         return _observableOf<FileResponse>(<any>null);
     }
 
-    searchFlights(searchQuery: SearchFlightsQuery): Observable<SearchFlightsVM> {
+    searchFlights(searchQuery: SearchFlightsQuery): Observable<PaginatedListOfSearchFlightsDTO> {
         let url_ = this.baseUrl + "/api/Airport/SearchFlights";
         url_ = url_.replace(/[?&]$/, "");
 
@@ -150,14 +150,14 @@ export class AirportClient implements IAirportClient {
                 try {
                     return this.processSearchFlights(<any>response_);
                 } catch (e) {
-                    return <Observable<SearchFlightsVM>><any>_observableThrow(e);
+                    return <Observable<PaginatedListOfSearchFlightsDTO>><any>_observableThrow(e);
                 }
             } else
-                return <Observable<SearchFlightsVM>><any>_observableThrow(response_);
+                return <Observable<PaginatedListOfSearchFlightsDTO>><any>_observableThrow(response_);
         }));
     }
 
-    protected processSearchFlights(response: HttpResponseBase): Observable<SearchFlightsVM> {
+    protected processSearchFlights(response: HttpResponseBase): Observable<PaginatedListOfSearchFlightsDTO> {
         const status = response.status;
         const responseBlob =
             response instanceof HttpResponse ? response.body :
@@ -168,7 +168,7 @@ export class AirportClient implements IAirportClient {
             return blobToText(responseBlob).pipe(_observableMergeMap(_responseText => {
             let result200: any = null;
             let resultData200 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver);
-            result200 = SearchFlightsVM.fromJS(resultData200);
+            result200 = PaginatedListOfSearchFlightsDTO.fromJS(resultData200);
             return _observableOf(result200);
             }));
         } else if (status !== 200 && status !== 204) {
@@ -176,7 +176,7 @@ export class AirportClient implements IAirportClient {
             return throwException("An unexpected server error occurred.", status, _responseText, _headers);
             }));
         }
-        return _observableOf<SearchFlightsVM>(<any>null);
+        return _observableOf<PaginatedListOfSearchFlightsDTO>(<any>null);
     }
 }
 
@@ -901,10 +901,15 @@ export interface IAirportDTO {
     iataCode?: string | undefined;
 }
 
-export class SearchFlightsVM implements ISearchFlightsVM {
-    searchedResult?: SearchFlightsDTO[] | undefined;
+export class PaginatedListOfSearchFlightsDTO implements IPaginatedListOfSearchFlightsDTO {
+    items?: SearchFlightsDTO[] | undefined;
+    pageIndex?: number;
+    totalPages?: number;
+    totalCount?: number;
+    hasPreviousPage?: boolean;
+    hasNextPage?: boolean;
 
-    constructor(data?: ISearchFlightsVM) {
+    constructor(data?: IPaginatedListOfSearchFlightsDTO) {
         if (data) {
             for (var property in data) {
                 if (data.hasOwnProperty(property))
@@ -915,34 +920,49 @@ export class SearchFlightsVM implements ISearchFlightsVM {
 
     init(_data?: any) {
         if (_data) {
-            if (Array.isArray(_data["searchedResult"])) {
-                this.searchedResult = [] as any;
-                for (let item of _data["searchedResult"])
-                    this.searchedResult!.push(SearchFlightsDTO.fromJS(item));
+            if (Array.isArray(_data["items"])) {
+                this.items = [] as any;
+                for (let item of _data["items"])
+                    this.items!.push(SearchFlightsDTO.fromJS(item));
             }
+            this.pageIndex = _data["pageIndex"];
+            this.totalPages = _data["totalPages"];
+            this.totalCount = _data["totalCount"];
+            this.hasPreviousPage = _data["hasPreviousPage"];
+            this.hasNextPage = _data["hasNextPage"];
         }
     }
 
-    static fromJS(data: any): SearchFlightsVM {
+    static fromJS(data: any): PaginatedListOfSearchFlightsDTO {
         data = typeof data === 'object' ? data : {};
-        let result = new SearchFlightsVM();
+        let result = new PaginatedListOfSearchFlightsDTO();
         result.init(data);
         return result;
     }
 
     toJSON(data?: any) {
         data = typeof data === 'object' ? data : {};
-        if (Array.isArray(this.searchedResult)) {
-            data["searchedResult"] = [];
-            for (let item of this.searchedResult)
-                data["searchedResult"].push(item.toJSON());
+        if (Array.isArray(this.items)) {
+            data["items"] = [];
+            for (let item of this.items)
+                data["items"].push(item.toJSON());
         }
+        data["pageIndex"] = this.pageIndex;
+        data["totalPages"] = this.totalPages;
+        data["totalCount"] = this.totalCount;
+        data["hasPreviousPage"] = this.hasPreviousPage;
+        data["hasNextPage"] = this.hasNextPage;
         return data; 
     }
 }
 
-export interface ISearchFlightsVM {
-    searchedResult?: SearchFlightsDTO[] | undefined;
+export interface IPaginatedListOfSearchFlightsDTO {
+    items?: SearchFlightsDTO[] | undefined;
+    pageIndex?: number;
+    totalPages?: number;
+    totalCount?: number;
+    hasPreviousPage?: boolean;
+    hasNextPage?: boolean;
 }
 
 export class SearchFlightsDTO implements ISearchFlightsDTO {
@@ -1040,6 +1060,8 @@ export class SearchFlightsQuery implements ISearchFlightsQuery {
     currencyCode?: string | undefined;
     maxPrice?: number | undefined;
     max?: number | undefined;
+    pageNumber?: number;
+    pageSize?: number;
 
     constructor(data?: ISearchFlightsQuery) {
         if (data) {
@@ -1066,6 +1088,8 @@ export class SearchFlightsQuery implements ISearchFlightsQuery {
             this.currencyCode = _data["currencyCode"];
             this.maxPrice = _data["maxPrice"];
             this.max = _data["max"];
+            this.pageNumber = _data["pageNumber"];
+            this.pageSize = _data["pageSize"];
         }
     }
 
@@ -1092,6 +1116,8 @@ export class SearchFlightsQuery implements ISearchFlightsQuery {
         data["currencyCode"] = this.currencyCode;
         data["maxPrice"] = this.maxPrice;
         data["max"] = this.max;
+        data["pageNumber"] = this.pageNumber;
+        data["pageSize"] = this.pageSize;
         return data; 
     }
 }
@@ -1111,6 +1137,8 @@ export interface ISearchFlightsQuery {
     currencyCode?: string | undefined;
     maxPrice?: number | undefined;
     max?: number | undefined;
+    pageNumber?: number;
+    pageSize?: number;
 }
 
 export class PaginatedListOfTodoItemDto implements IPaginatedListOfTodoItemDto {

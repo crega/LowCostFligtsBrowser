@@ -1,6 +1,7 @@
 ﻿using Afonsoft.Amadeus;
 using LowCostFligtsBrowser.Application.Airports.Queries.GetAirports;
 using LowCostFligtsBrowser.Application.Airports.Queries.SearchFlights;
+using LowCostFligtsBrowser.Application.Common.Models;
 using LowCostFligtsBrowser.Application.WeatherForecasts.Queries.GetWeatherForecasts;
 using LowCostFligtsBrowser.Domain.Entities;
 using LowCostFligtsBrowser.Infrastructure;
@@ -43,7 +44,7 @@ namespace LowCostFligtsBrowser.WebUI.Controllers
 
         }
         [HttpPost("SearchFlights")]
-        public async Task<SearchFlightsVM> SearchFlights([FromBody] SearchFlightsQuery searchQuery
+        public async Task<PaginatedList<SearchFlightsDTO>> SearchFlights([FromBody] SearchFlightsQuery searchQuery
             )
         {
             return await Mediator.Send(searchQuery);

@@ -1,6 +1,8 @@
 ﻿using AutoMapper;
 using AutoMapper.QueryableExtensions;
 using LowCostFligtsBrowser.Application.Common.Interfaces;
+using LowCostFligtsBrowser.Application.Common.Mappings;
+using LowCostFligtsBrowser.Application.Common.Models;
 using LowCostFligtsBrowser.Infrastructure;
 using MediatR;
 using Microsoft.EntityFrameworkCore;
@@ -14,7 +16,7 @@ using System.Threading.Tasks;
 
 namespace LowCostFligtsBrowser.Application.Airports.Queries.SearchFlights
 {
-    public class SearchFlightsQuery : IRequest<SearchFlightsVM>, IEquatable<SearchFlightsQuery>
+    public class SearchFlightsQuery : IRequest<PaginatedList<SearchFlightsDTO>>, IEquatable<SearchFlightsQuery>
     {
         #region Public Properites
         public string OriginIATACode { get; set; }
@@ -31,6 +33,10 @@ namespace LowCostFligtsBrowser.Application.Airports.Queries.SearchFlights
         public string? CurrencyCode { get; set; }
         public int? MaxPrice { get; set; }
         public int? Max { get; set; }
+        // ignored when hashing object, irellevante for caching
+        public int PageNumber { get;  set; }
+        // ignored when hashing object, irellevante for caching
+        public int PageSize { get;  set; }
         #endregion
 
         #region GetHash and Equals 
@@ -63,9 +69,10 @@ namespace LowCostFligtsBrowser.Application.Airports.Queries.SearchFlights
             HashCode hash = new HashCode();
             hash.Add(OriginIATACode);
             hash.Add(DestinationIATACode);
-            hash.Add(DepartureTime);
+            hash.Add(DepartureTime.Date);
             hash.Add(NumberOfAdults);
-            hash.Add(ReturnDate);
+            DateTime? dateOfReturn = ReturnDate != null ? ReturnDate.Value.Date : null;
+            hash.Add(dateOfReturn);
             hash.Add(NumberOfChildren);
             hash.Add(NumberOfInfants);
             hash.Add(TravelClass);
@@ -81,7 +88,7 @@ namespace LowCostFligtsBrowser.Application.Airports.Queries.SearchFlights
 
     }
     public class SearchFlightsQueryHandler
-        : IRequestHandler<SearchFlightsQuery, SearchFlightsVM>
+        : IRequestHandler<SearchFlightsQuery, PaginatedList<SearchFlightsDTO>>
     {
         private readonly IApplicationDbContext _context;
         private readonly IMapper _mapper;
@@ -95,31 +102,32 @@ namespace LowCostFligtsBrowser.Application.Airports.Queries.SearchFlights
             _inMemoryCache = memoryCache;
         }
 
-        public Task<SearchFlightsVM> Handle(SearchFlightsQuery request, CancellationToken cancellationToken)
+        public Task<PaginatedList<SearchFlightsDTO>> Handle(SearchFlightsQuery request, CancellationToken cancellationToken)
         {
-            SearchFlightsVM cachedRequestResult;
+            List<SearchFlightsDTO> cachedRequestResult;
             int cacheId = request.GetHashCode();
-            cachedRequestResult = _inMemoryCache.Get<SearchFlightsVM>(cacheId);
+            cachedRequestResult = _inMemoryCache.Get<List<SearchFlightsDTO>>(cacheId);
             if (cachedRequestResult != null)
             {
-                return Task.FromResult(cachedRequestResult);
+                var toReturnPaginatedList = cachedRequestResult.AsQueryable().PaginatedListOfData(request.PageNumber, request.PageSize);
+                return Task.FromResult(toReturnPaginatedList);
             }
             Task<Success2> searchData = _client.GetFlightOffersAsync(request);
             var serviceResult = searchData.Result.Data;
-            var resultq = serviceResult.AsQueryable();
-            var resulta = resultq.ProjectTo<SearchFlightsDTO>(_mapper.ConfigurationProvider);
-            var result = resulta.OrderBy(t => t.Id).ToList();
-            var toReturn = new SearchFlightsVM()
-            {
-                SearchedResult = result
-            };
+            var resultQuery = serviceResult.AsQueryable()
+                .OrderBy(t => t.Id)
+                .ProjectTo<SearchFlightsDTO>(_mapper.ConfigurationProvider);
+            var listToCache = resultQuery.ToList();
+              var result =resultQuery.PaginatedListOfData(request.PageNumber, request.PageSize);
+      
             DateTimeOffset durationOfCache = CalculateCacheTimeout();
-            _inMemoryCache.Set<SearchFlightsVM>(cacheId, toReturn, durationOfCache);
-            return Task.FromResult(toReturn);
+            _inMemoryCache.Set<List<SearchFlightsDTO>>(cacheId, listToCache, durationOfCache);
+            return Task.FromResult(result);
 
         }
         /// <summary>
         /// Calculates duration of validity of an in memory cache entry.
+        /// <para>Duration is defined in appsettings.json file</para>
         /// </summary>
         /// <returns></returns>
         private DateTimeOffset CalculateCacheTimeout()

@@ -71,7 +71,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/SearchFlightsVM"
+                  "$ref": "#/components/schemas/PaginatedListOfSearchFlightsDTO"
                 }
               }
             }
@@ -544,16 +544,34 @@
           }
         }
       },
-      "SearchFlightsVM": {
+      "PaginatedListOfSearchFlightsDTO": {
         "type": "object",
         "additionalProperties": false,
         "properties": {
-          "searchedResult": {
+          "items": {
             "type": "array",
             "nullable": true,
             "items": {
               "$ref": "#/components/schemas/SearchFlightsDTO"
             }
+          },
+          "pageIndex": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "totalPages": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "totalCount": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "hasPreviousPage": {
+            "type": "boolean"
+          },
+          "hasNextPage": {
+            "type": "boolean"
           }
         }
       },
@@ -676,6 +694,14 @@
             "type": "integer",
             "format": "int32",
             "nullable": true
+          },
+          "pageNumber": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "pageSize": {
+            "type": "integer",
+            "format": "int32"
           }
         }
       },

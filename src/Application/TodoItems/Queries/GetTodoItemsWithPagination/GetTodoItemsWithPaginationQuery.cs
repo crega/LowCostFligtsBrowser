@@ -35,7 +35,7 @@ namespace LowCostFligtsBrowser.Application.TodoItems.Queries.GetTodoItemsWithPag
                 .Where(x => x.ListId == request.ListId)
                 .OrderBy(x => x.Title)
                 .ProjectTo<TodoItemDto>(_mapper.ConfigurationProvider)
-                .PaginatedListAsync(request.PageNumber, request.PageSize); ;
+                .PaginatedListOfDataAsync(request.PageNumber, request.PageSize); ;
         }
     }
 }

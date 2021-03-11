@@ -6,10 +6,10 @@ using System.Threading.Tasks;
 
 namespace LowCostFligtsBrowser.Application.Airports.Queries.SearchFlights
 {
-    public class SearchFlightsDTO
+   public  class SearchFlightsDTO 
     {
         public int Id { get; set; }
-        public string DepartureAirport{ get; set; }
+        public string DepartureAirport { get; set; }
         public string ArrivalAirport { get; set; }
         public DateTime DateOfDeparture { get; set; }
         public DateTime DateOfArrival { get; set; }
@@ -23,7 +23,3 @@ namespace LowCostFligtsBrowser.Application.Airports.Queries.SearchFlights
         public string Price { get; set; }
     }
 }
-
-
-
-
