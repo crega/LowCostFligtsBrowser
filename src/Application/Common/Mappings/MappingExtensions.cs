@@ -1,5 +1,6 @@
 ﻿using AutoMapper;
 using AutoMapper.QueryableExtensions;
+using LowCostFligtsBrowser.Application.Common.Extensions;
 using LowCostFligtsBrowser.Application.Common.Models;
 using Microsoft.EntityFrameworkCore;
 using System.Collections.Generic;
@@ -17,5 +18,17 @@ namespace LowCostFligtsBrowser.Application.Common.Mappings
 
         public static Task<List<TDestination>> ProjectToListAsync<TDestination>(this IQueryable queryable, IConfigurationProvider configuration)
             => queryable.ProjectTo<TDestination>(configuration).ToListAsync();
+        public static List<T> SortByColumnAndDirection<T>( this IQueryable<T> list, string sortOrder, string sortProperty)
+
+        {
+            if (sortOrder?.ToLower() == "asc")
+            {
+                return LinqExtensions.OrderBy(list, sortProperty).ToList<T>();
+            }
+            else
+            {
+                return LinqExtensions.OrderByDescending(list, sortProperty).ToList<T>(); ;
+            }
+        }
     }
 }

@@ -1,10 +1,15 @@
-import { Component, OnInit } from '@angular/core';
-import { AirportClient } from '../web-api-client';
+import { AfterViewInit, Component, OnInit, ViewChild } from '@angular/core';
+import { AirportClient, IPaginatedListOfSearchFlightsDTO, SearchFlightsDTO } from '../web-api-client';
 import { SearchFlightsDataSource } from './search-flights-dataSource';
 
 import {FormControl, FormGroupDirective, NgForm, Validators,FormGroup, ValidatorFn, AbstractControl, ValidationErrors} from '@angular/forms';
 import {ErrorStateMatcher} from '@angular/material/core';
 import { parseDate } from 'ngx-bootstrap';
+import { MatPaginator } from '@angular/material/paginator';
+import { tap } from 'rxjs/operators';
+import { ActivatedRoute } from '@angular/router';
+import { MatSort } from '@angular/material/sort';
+import { merge } from 'rxjs';
 
 /** Error when invalid control is dirty, touched, or submitted. */
 export class MyErrorStateMatcher implements ErrorStateMatcher {
@@ -22,8 +27,8 @@ export class MyErrorStateMatcher implements ErrorStateMatcher {
   styleUrls: ['./search-flights.component.css']
 })
 
-export class SearchFlightsComponent implements OnInit {
-  
+export class SearchFlightsComponent implements AfterViewInit,OnInit {
+  flight:SearchFlightsDTO[];
   dataSource :SearchFlightsDataSource;
   displayedColumns=["id","departureAirport","arrivalAirport","dateOfDeparture","dateOfArrival",
   "numberOfItinerariesArrival","numberOfItinerariesDeparture","numberOfAdults","numberOfChildren",
@@ -59,27 +64,65 @@ export class SearchFlightsComponent implements OnInit {
   
   
   
-  
+  @ViewChild(MatPaginator) paginator: MatPaginator;
+  @ViewChild(MatSort) sort: MatSort;
   matcher = new MyErrorStateMatcher();
-  constructor(private flightsService:AirportClient) { 
+  totalCount?: Number;
+  constructor(private flightsService:AirportClient,private route: ActivatedRoute) { 
 
   }
 
   ngOnInit(): void {
+
+   
     this.searchForm.controls['arrivalDateFormControl'].setValidators(this.validateDates(this.searchForm));
     this.searchForm.controls['arrivalDateFormControl']
     this.dataSource = new SearchFlightsDataSource(this.flightsService);
-    this.dataSource.loadFlights("ZAG","DBV",new Date(),null,1,null,null,"EUR",1,5 );
+    this.totalCount=this.dataSource.totalCount;
+    //this.dataSource.loadFlights("ZAG","DBV",new Date(new Date().toLocaleString()),null,1,null,null,"EUR",1,5 );
   }
+
+  ngAfterViewInit() {
+    this.sort.sortChange.subscribe(() => this.paginator.pageIndex = 0);
+    // this.paginator.page
+    //     .pipe(
+    //         tap(() => this.loadFlightsPage()),
+            
+    //     )
+    //     .subscribe();
+        merge(this.sort.sortChange, this.paginator.page)
+            .pipe(
+                tap(() => this.loadFlightsPage())
+            )
+            .subscribe();
+
+
+}
+
+loadFlightsPage() {
+    this.dataSource.loadFlights(
+      this.searchForm.controls['departureIATACodeFormControl'].value,
+      this.searchForm.controls['arrivalIATACodeFormControl'].value,
+       this.searchForm.controls['departureDateFormControl'].value,
+       this.searchForm.controls['arrivalDateFormControl'].value,
+      parseInt(this.searchForm.controls['numberOfAdultsFormControl'].value),
+      parseInt(this.searchForm.controls['numberOfChildrenFormControl'].value),
+      parseInt(this.searchForm.controls['numberOfInfantsFormControl'].value),
+      this.searchForm.controls['currencyFormControl'].value,
+        this.paginator.pageIndex,
+        this.paginator.pageSize,
+        this.sort.direction,
+        this.sort.active
+        );
+        console.log(this.totalCount);
+
+}
   validateDates (group:FormGroup):ValidatorFn{
-    console.log("group");
-    console.log(group.controls);
-    
+
     const departure = group.controls['departureDateFormControl'].value;
 
     const arrival = group.controls['arrivalDateFormControl'].value;
-    console.log(departure);
-    console.log(arrival);
+
   
     var resu=departure && arrival && departure  >= arrival ? { dateNotAfter: true } : null;
     group.controls['arrivalDateFormControl'].setErrors({resu});
@@ -89,6 +132,7 @@ export class SearchFlightsComponent implements OnInit {
 
   onSubmit():void {
     console.log("per");
+    console.log(this.totalCount);
     this.dataSource.loadFlights(this.searchForm.controls['departureIATACodeFormControl'].value,
     this.searchForm.controls['arrivalIATACodeFormControl'].value,
      this.searchForm.controls['departureDateFormControl'].value,
@@ -96,10 +140,11 @@ export class SearchFlightsComponent implements OnInit {
     parseInt(this.searchForm.controls['numberOfAdultsFormControl'].value),
     parseInt(this.searchForm.controls['numberOfChildrenFormControl'].value),
     parseInt(this.searchForm.controls['numberOfInfantsFormControl'].value),
-    this.searchForm.controls['currencyFormControl'].value
-    //pageNumber,
-    //pageSize
+    this.searchForm.controls['currencyFormControl'].value,
+    1,
+     this.paginator.pageSize,
     )
+    console.log(this.totalCount);
   ;
   }
   keyPressAlphaNumeric(event){

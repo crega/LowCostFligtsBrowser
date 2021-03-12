@@ -1047,6 +1047,8 @@ export interface ISearchFlightsDTO {
 
 export class SearchFlightsQuery implements ISearchFlightsQuery {
     originIATACode?: string | undefined;
+    sortOrder?: string | undefined;
+    sortProperty?: string | undefined;
     destinationIATACode?: string | undefined;
     departureTime?: Date;
     numberOfAdults?: number;
@@ -1075,6 +1077,8 @@ export class SearchFlightsQuery implements ISearchFlightsQuery {
     init(_data?: any) {
         if (_data) {
             this.originIATACode = _data["originIATACode"];
+            this.sortOrder = _data["sortOrder"];
+            this.sortProperty = _data["sortProperty"];
             this.destinationIATACode = _data["destinationIATACode"];
             this.departureTime = _data["departureTime"] ? new Date(_data["departureTime"].toString()) : <any>undefined;
             this.numberOfAdults = _data["numberOfAdults"];
@@ -1103,6 +1107,8 @@ export class SearchFlightsQuery implements ISearchFlightsQuery {
     toJSON(data?: any) {
         data = typeof data === 'object' ? data : {};
         data["originIATACode"] = this.originIATACode;
+        data["sortOrder"] = this.sortOrder;
+        data["sortProperty"] = this.sortProperty;
         data["destinationIATACode"] = this.destinationIATACode;
         data["departureTime"] = this.departureTime ? this.departureTime.toISOString() : <any>undefined;
         data["numberOfAdults"] = this.numberOfAdults;
@@ -1124,6 +1130,8 @@ export class SearchFlightsQuery implements ISearchFlightsQuery {
 
 export interface ISearchFlightsQuery {
     originIATACode?: string | undefined;
+    sortOrder?: string | undefined;
+    sortProperty?: string | undefined;
     destinationIATACode?: string | undefined;
     departureTime?: Date;
     numberOfAdults?: number;

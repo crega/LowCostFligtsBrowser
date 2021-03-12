@@ -1,16 +1,18 @@
 import { CollectionViewer, DataSource } from "@angular/cdk/collections";
 import { BehaviorSubject, Observable,of } from "rxjs";
-import {catchError,finalize,map} from 'rxjs/operators'; 
+import {catchError,finalize,map, multicast, share, tap} from 'rxjs/operators'; 
 import { AirportClient, IPaginatedListOfSearchFlightsDTO, PaginatedListOfSearchFlightsDTO, SearchFlightsQuery } from "../web-api-client";
 
 export class SearchFlightsDataSource implements DataSource<PaginatedListOfSearchFlightsDTO> {
 
     private flightsSubject = new BehaviorSubject<PaginatedListOfSearchFlightsDTO[]>([]);
     private loadingSubject = new BehaviorSubject<boolean>(false);
-
+    public totalCount:number;
     public loading$ = this.loadingSubject.asObservable();
 
-    constructor(private searchFlightsService: AirportClient) {}
+    constructor(private searchFlightsService: AirportClient) {
+        this.totalCount=0;
+    }
 
     connect(collectionViewer: CollectionViewer): Observable<PaginatedListOfSearchFlightsDTO[]> {
         console.log("Connecting data source");
@@ -26,7 +28,7 @@ export class SearchFlightsDataSource implements DataSource<PaginatedListOfSearch
     // loadFlights(courseId: number, filter = '',
     //             sortDirection = 'asc', pageIndex = 0, pageSize = 3) {
         loadFlights(originIATACode='',destinationIATACode='', departureTime:Date,returnDate?:Date,numberOfAdults:number=1,numberOfChildren?:number,numberOfInfants?:number,currencyCode='EUR'
-        ,pageNumber=0,pageSize=5) {
+        ,pageNumber=0,pageSize=5,sortOrder='asc',sortColumn='price') {
             var searchQuery= new SearchFlightsQuery();
             searchQuery.originIATACode= originIATACode;
             searchQuery.destinationIATACode= destinationIATACode;
@@ -38,17 +40,28 @@ export class SearchFlightsDataSource implements DataSource<PaginatedListOfSearch
             searchQuery.currencyCode=currencyCode;
             searchQuery.pageNumber=pageNumber;
             searchQuery.pageSize= pageSize;
+            searchQuery.sortOrder=sortOrder;
+            searchQuery.sortProperty=sortColumn;
             
             
 
         this.loadingSubject.next(true);
         
-        this.searchFlightsService.searchFlights(searchQuery).pipe(
+        var bs= this.searchFlightsService.searchFlights(searchQuery).pipe(
+            share(),
+            
+        );
+        bs.pipe(
             map(res=>res["items"]),
             catchError(() => of([])),
-            finalize(() => this.loadingSubject.next(false))
-        )
-        .subscribe(records=> this.flightsSubject.next(records))
-        // .subscribe();
+            finalize(() => this.loadingSubject.next(false)))
+        .subscribe(records=> this.flightsSubject.next(records));
+
+        bs.pipe(
+            map(res=>res.totalCount),
+            finalize(() => this.loadingSubject.next(false)))
+            .subscribe(top=>this.totalCount=top,()=>this.totalCount=0);
+        
+        
     }    
 }

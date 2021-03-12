@@ -8,7 +8,7 @@ namespace LowCostFligtsBrowser.Application.Common.Models
 {
     public class PaginatedList<T> 
     {
-        public List<T> Items { get; }
+        public List<T> Items { get; set; }
         public int PageIndex { get; }
         public int TotalPages { get; }
         public int TotalCount { get; }
@@ -39,5 +39,7 @@ namespace LowCostFligtsBrowser.Application.Common.Models
 
             return new PaginatedList<T>(items, count, pageIndex, pageSize);
         }
+
+    
     }
 }

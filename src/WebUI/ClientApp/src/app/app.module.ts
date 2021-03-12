@@ -1,5 +1,5 @@
 import { BrowserModule } from '@angular/platform-browser';
-import { NgModule } from '@angular/core';
+import { LOCALE_ID, NgModule } from '@angular/core';
 import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { HttpClientModule, HTTP_INTERCEPTORS } from '@angular/common/http';
 import { RouterModule } from '@angular/router';
@@ -22,6 +22,10 @@ import { ModalModule } from 'ngx-bootstrap/modal';
 import { SearchFlightsComponent } from './search-flights/search-flights.component';
 import { AllAngularMaterialsModule } from './angular-material-module';
 import { ErrorStateMatcher } from '@angular/material/core';
+import { FlightsResolver } from './servicesAndResolvers/FlightsRouteResolver';
+import locales from '@angular/common/locales/hr'
+import { registerLocaleData } from '@angular/common';
+registerLocaleData(locales);
 
 @NgModule({
   declarations: [
@@ -46,7 +50,8 @@ import { ErrorStateMatcher } from '@angular/material/core';
       { path: '', component: HomeComponent, pathMatch: 'full' },
       { path: 'counter', component: CounterComponent },
       { path: 'fetch-data', component: FetchDataComponent },
-      { path: 'search-flights', component: SearchFlightsComponent ,canActivate: [AuthorizeGuard] },
+      { path: 'search-flights', component: SearchFlightsComponent ,canActivate: [AuthorizeGuard],resolve:
+     {flights:FlightsResolver} },
       { path: 'todo', component: TodoComponent, canActivate: [AuthorizeGuard] },
     ]),
     BrowserAnimationsModule,
@@ -54,7 +59,8 @@ import { ErrorStateMatcher } from '@angular/material/core';
   ], 
   providers: [
     { provide: HTTP_INTERCEPTORS, useClass: AuthorizeInterceptor, multi: true },
-    { provide: ErrorStateMatcher, useClass: SearchFlightsComponent }
+    { provide: ErrorStateMatcher, useClass: SearchFlightsComponent },
+    { provide: LOCALE_ID, useValue: 'hr-HR'}
   ],
   bootstrap: [AppComponent]
 })

@@ -20,6 +20,8 @@ namespace LowCostFligtsBrowser.Application.Airports.Queries.SearchFlights
     {
         #region Public Properites
         public string OriginIATACode { get; set; }
+        public string SortOrder { get; set; }
+        public string SortProperty { get; set; }
         public string DestinationIATACode { get; set; }
         public DateTimeOffset DepartureTime { get; set; }
         public int NumberOfAdults { get; set; }
@@ -110,6 +112,7 @@ namespace LowCostFligtsBrowser.Application.Airports.Queries.SearchFlights
             if (cachedRequestResult != null)
             {
                 var toReturnPaginatedList = cachedRequestResult.AsQueryable().PaginatedListOfData(request.PageNumber, request.PageSize);
+                ApplySorting(request, toReturnPaginatedList);
                 return Task.FromResult(toReturnPaginatedList);
             }
             Task<Success2> searchData = _client.GetFlightOffersAsync(request);
@@ -118,13 +121,25 @@ namespace LowCostFligtsBrowser.Application.Airports.Queries.SearchFlights
                 .OrderBy(t => t.Id)
                 .ProjectTo<SearchFlightsDTO>(_mapper.ConfigurationProvider);
             var listToCache = resultQuery.ToList();
-              var result =resultQuery.PaginatedListOfData(request.PageNumber, request.PageSize);
-      
+            var result = resultQuery.PaginatedListOfData(request.PageNumber, request.PageSize);
             DateTimeOffset durationOfCache = CalculateCacheTimeout();
             _inMemoryCache.Set<List<SearchFlightsDTO>>(cacheId, listToCache, durationOfCache);
+            ApplySorting(request, result);
             return Task.FromResult(result);
 
         }
+        /// <summary>
+        /// Applies filtering based on filtering parameters
+        /// <para>Supports multiple properties filtering, by formating <see cref="SearchFlightsQuery.SortProperty"/> like <code>"firstProperty.secondProperty.thirdProperty"</code>"/></para>
+        /// </summary>
+        /// <param name="request"></param>
+        /// <param name="result"></param>
+        private static void ApplySorting(SearchFlightsQuery request, PaginatedList<SearchFlightsDTO> result)
+        {
+            if (!string.IsNullOrEmpty(request.SortOrder) && !string.IsNullOrEmpty(request.SortProperty))
+                result.Items = result.Items.AsQueryable().SortByColumnAndDirection(request.SortOrder, request.SortProperty);
+        }
+
         /// <summary>
         /// Calculates duration of validity of an in memory cache entry.
         /// <para>Duration is defined in appsettings.json file</para>
