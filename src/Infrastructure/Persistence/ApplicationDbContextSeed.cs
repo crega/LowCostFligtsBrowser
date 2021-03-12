@@ -59,6 +59,7 @@ namespace LowCostFligtsBrowser.Infrastructure.Persistence
             }
             if (!context.Airports.Any())
             {
+                // In-Memory DB does NOT support transacitons!!
                 context.Database.BeginTransaction();
                 context.Database.ExecuteSqlRaw($"SET IDENTITY_INSERT Airport ON;");
 

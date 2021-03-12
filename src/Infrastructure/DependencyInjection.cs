@@ -19,7 +19,7 @@ namespace LowCostFligtsBrowser.Infrastructure
             if (configuration.GetValue<bool>("UseInMemoryDatabase"))
             {
                 services.AddDbContext<ApplicationDbContext>(options =>
-                    options.UseInMemoryDatabase("LowCostFlightDb"));
+                    options.UseInMemoryDatabase("DefaultConnection"));
             }
             else
             {
