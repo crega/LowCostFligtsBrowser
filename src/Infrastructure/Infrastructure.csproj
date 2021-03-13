@@ -34,9 +34,10 @@
     <Folder Include="Persistence\ImportDataFiles\" />
   </ItemGroup>
 
-  <ItemGroup>
-    <OpenApiReference Include="..\..\..\..\..\Downloads\FlightOffersSearch_v2_swagger_specification.json" CodeGenerator="NSwagCSharp" Namespace="AmadeusService" Link="OpenAPIs\FlightOffersSearch_v2_swagger_specification.json" />
-  </ItemGroup>
+  <!--<ItemGroup>-->
+    <!-- Not needed -->
+     <!-- <OpenApiReference Include="..\..\..\..\..\Downloads\FlightOffersSearch_v2_swagger_specification.json" CodeGenerator="NSwagCSharp" Namespace="AmadeusService" Link="OpenAPIs\FlightOffersSearch_v2_swagger_specification.json" /> -->
+  <!--</ItemGroup>-->
 
   <ItemGroup>
     <None Update="Persistence\ImportDataFiles\ImportAirportsData.csv">
