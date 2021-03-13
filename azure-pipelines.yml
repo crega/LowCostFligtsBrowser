@@ -27,7 +27,7 @@ steps:
 
 - task: PublishPipelineArtifact@1
   inputs:
-    targetPath: 'dist'
+    targetPath: ''
     artifact: 'ngApp'
     publishLocation: 'pipeline'
     
