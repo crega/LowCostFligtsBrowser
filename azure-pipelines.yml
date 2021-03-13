@@ -10,26 +10,36 @@ pool:
   vmImage: ubuntu-latest
 
 variables:
+  solution: '**/*.sln'
+  buildPlatform: 'Any CPU'
   buildConfiguration: 'Release'
 
 steps:
-- task: NodeTool@0
-  inputs:
-    versionSpec: '10.x'
-  displayName: 'Install Node.js'
+- task: NuGetToolInstaller@1
 
-- script: |
-    npm install -g @angular/cli
-    npm install
-    ng build --prod
-  displayName: 'npm install and build'
-  workingDirectory: 'src/WebUI/ClientApp/'
-
-- task: PublishPipelineArtifact@1
+- task: NuGetCommand@2
   inputs:
-    targetPath: ''
-    artifact: 'ngApp'
-    publishLocation: 'pipeline'
-    
+    restoreSolution: '$(solution)'
+
 - script: dotnet build --configuration $(buildConfiguration)
-  displayName: 'dotnet build $(buildConfiguration)'
+  displayName: 'Build .Net Solution'
+
+- task: DotNetCoreCLI@2
+  displayName: 'Run Unit tests'
+  inputs:
+    command: test
+    projects: 'tests/**/*.csproj'
+    arguments: '--configuration $(BuildConfiguration)'
+
+- task: Npm@1
+  displayName: 'Restore Angular Dependencies'
+  inputs:
+    workingDir: $(Build.Repository.LocalPath)/WebUI/clientApp
+    verbose: false
+- task: Npm@1
+  displayName: 'Build Angular'
+  inputs:
+    command: custom
+    workingDir: $(Build.Repository.LocalPath)/WebUI/clientApp
+    verbose: false
+    customCommand: 'run build'
