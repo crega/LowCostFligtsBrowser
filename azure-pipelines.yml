@@ -23,7 +23,7 @@ steps:
     npm install
     ng build --prod
   displayName: 'npm install and build'
-  workingDirectory: '/WebUI/clientApp/'
+  workingDirectory: 'src/WebUI/ClientApp/'
 
 - task: PublishPipelineArtifact@1
   inputs:
