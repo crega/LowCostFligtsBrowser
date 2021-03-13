@@ -1,4 +1,4 @@
-## LowCostFligtsBrowser
+## LowCostFligtsBrowser [![Build Status](https://dev.azure.com/vjuric/King-flights-browser/_apis/build/status/crega.LowCostFligtsBrowser?branchName=master)](https://dev.azure.com/vjuric/King-flights-browser/_build/latest?definitionId=1&branchName=master)
 This project is using my template for Clean Code using
 * .NET Core 5.0,
 * Entity Framework 5.0 for backend,
