@@ -34,12 +34,12 @@ steps:
 - task: Npm@1
   displayName: 'Restore Angular Dependencies'
   inputs:
-    workingDir: $(Build.Repository.LocalPath)/WebUI/clientApp
+    workingDir: $(Build.Repository.LocalPath)/src/WebUI/ClientApp
     verbose: false
 - task: Npm@1
   displayName: 'Build Angular'
   inputs:
     command: custom
-    workingDir: $(Build.Repository.LocalPath)/WebUI/clientApp
+    workingDir: $(Build.Repository.LocalPath)/src/WebUI/ClientApp
     verbose: false
     customCommand: 'run build'
